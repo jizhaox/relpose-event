@@ -9,6 +9,8 @@ function [v_sol, R_l_sol, u_l_sol] = npt_event_solver_cop(data_orientations, dat
 %     Full-DoF Egomotion Estimation for Event Cameras Using Geometric Solvers.
 %     IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR), 2025.
 
+SMALL_VALUE = 1e-4;
+
 n = numel(data_orientations);
 R_l_sol = cell(n, 1);
 u_l_sol = cell(n, 1);
@@ -23,7 +25,13 @@ for i = 1:n
     d_sol{i} = d;
     B = construct_coef_mat(events, orientations, d);
     [U,S,V] = svd(B);
-    x = V(:, end);
+    
+    if(norm(V(4:6, end)) > SMALL_VALUE)
+        x = V(:, end);
+    else
+        x = V(:, end) + V(:, end-1);
+    end
+
     v = x(1:3);
     m = x(4:6);
     s = norm(m);

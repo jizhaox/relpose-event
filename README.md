@@ -2,6 +2,7 @@
 
 This repository provides solvers to estimate egomotion for event cameras. It contains solvers for angular and linear velocities  [1]. The core optimization algorithms are implemented in C++. We provide compiled MEX files compatible with both Ubuntu 20.04 + Matlab 2018b, as well as Windows 10 + Matlab R2022a. The data generation and demonstration scripts are written in MATLAB.
 
+[1] [Ji Zhao](https://sites.google.com/site/drjizhao), [Banglei Guan](https://guanbanglei.github.io/), [Zibin Liu](https://github.com/Zibin6), and [Laurent Kneip](https://mpl.sist.shanghaitech.edu.cn/Director.html). [**Full-DoF Egomotion Estimation for Event Cameras Using Geometric Solvers**](https://arxiv.org/pdf/2503.03307). IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR), 2025.
 
 ```
 @inproceedings{zhao2025full,
@@ -12,7 +13,7 @@ This repository provides solvers to estimate egomotion for event cameras. It con
 }
 ```
 
-**Author:** [Ji Zhao](https://sites.google.com/site/drjizhao) and [Zibin Liu](https://github.com/Zibin6)
+**Main Contributors:** [Ji Zhao](https://sites.google.com/site/drjizhao) and [Zibin Liu](https://github.com/Zibin6)
 
 ## 2. Quick Start
  
