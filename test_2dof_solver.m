@@ -17,14 +17,22 @@ t_max = 0.5;
 disp('run npt_event_solver_cop() for help.');
 
 %% linear velocity estimation
-[v_sol, tm] = npt_event_solver_cop(orientations, events);
+[v_sol, line_struct_all, tm] = npt_event_solver_cop(orientations, events);
 
+%% performance evaluation
+err_v = evaluate_lin_error(v_sol, v_gt);
+% angular re-projection error
+err_reproj = evaluate_angular_reproj_error(events, w_gt, v_sol, line_struct_all);
+
+%% output
 format long
 disp('N-point linear solver for event cameras:')
-disp('ground truth:');
-disp(v_gt)
-disp('estimation (with scale ambiguity):');
-disp(v_sol)
+disp('linear velocity: ground truth and estimation (with scale ambiguity)');
+disp([v_gt, v_sol])
+disp('error of linear velocity using ground truth (unit: degree)')
+disp(err_v)
+disp('error of linear velocity using angular re-projection (unit: degree)')
+disp(max(err_reproj))
 disp('runtime (unit: microsecond):');
 disp(tm)
 

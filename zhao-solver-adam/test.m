@@ -27,9 +27,9 @@ for i = 1:1
     %% input parameters
     %[w, v] = relpose_event(events, w0, 303, parames, options)
     %% default parameters
-    [w, v, objValue, t] = relpose_event(events, [], 101)
+    [w_est, v_est, line_struct_all, objValue, t] = relpose_event(events, [], 103)
     toc
     
-    err_w = norm(w - w_gt) / (norm(w) + norm(w_gt))
-    err_v = rad2deg(acos(abs(v'*v_gt)/norm(v)/norm(v_gt)))
+    err_w = evaluate_ang_error(w_est, w_gt)
+    err_v = evaluate_lin_error(v_est, v_gt)
 end

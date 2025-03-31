@@ -13,7 +13,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
             "Function:npt_event_solver_cop\n"
             "Estimate linear velocity for event cameras\n"
             "Author: Ji Zhao\n"
-            "lastest update: 03.22.2025\n"
+            "lastest update: 03.31.2025\n"
             "\n"
             "Input arguments\n"
             "1st: angular velocity (3*1 vector) or orientations (A two-level cell array, cell{cell{3x3 double}})\n"
@@ -21,7 +21,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
             "\n"
             "Output arguments\n"
             "1st: estimated linear velocity with scale ambiguity\n"
-            "2nd: runtime (unit: microsecond)\n"
+            "2nd: line structure (each cell correspnds to a line structure)\n"
+            "3rd: runtime (unit: microsecond)\n"
             "\n"
             "**********************************************\n"
             "\n");
@@ -109,12 +110,13 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
     // estimate translation
     std::chrono::time_point<std::chrono::high_resolution_clock> startTime = std::chrono::high_resolution_clock::now();
     Vector3d v = Vector3d::Zero();
+    vector<Matrix3d> line_struct_all;
     bool flag;
     if (is_ang_vel_input) {
-        flag = compute_translation_cop(cpp_events, omg, v);
+        flag = compute_translation_cop(cpp_events, omg, v, line_struct_all);
     }
     else {
-        flag = translation_cop_core(cpp_events, cpp_orientations, v);
+        flag = translation_cop_core(cpp_events, cpp_orientations, v, line_struct_all);
     }
     long long elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - startTime).count();
 
@@ -125,9 +127,21 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
             result[i] = v(i);
         }
     }
-    // Output the objective
+    // output line structure
     if (nlhs > 1) {
-        plhs[1] = mxCreateDoubleScalar(static_cast<double>(elapsedTime));
+        size_t n = line_struct_all.size();
+        plhs[1] = mxCreateCellMatrix(n, 1);
+        for (size_t j = 0; j < n; ++j) {
+            mxArray *mat = mxCreateDoubleMatrix(3, 3, mxREAL);
+            double *data = mxGetPr(mat);
+            const Eigen::Matrix3d& matrix = line_struct_all[j];
+            std::memcpy(data, matrix.data(), 9 * sizeof(double));
+            mxSetCell(plhs[1], j, mat);
+        }
+    }
+    // output runtime
+    if (nlhs > 2) {
+        plhs[2] = mxCreateDoubleScalar(static_cast<double>(elapsedTime));
     }
 
     return;

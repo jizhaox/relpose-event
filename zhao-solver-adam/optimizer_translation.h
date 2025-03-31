@@ -9,9 +9,10 @@
 using namespace Eigen;
 using namespace std;
 
-bool translation_cop_core(vector<vector<Event>>& events, vector<vector<Matrix3d>>& orientations, Vector3d& v_sol) {
+bool translation_cop_core(vector<vector<Event>>& events, vector<vector<Matrix3d>>& orientations, Vector3d& v_sol, vector<Matrix3d>& line_struct_all) {
     int n = events.size();
     MatrixXd CC(n, 3);
+    line_struct_all.resize(n);
     for (size_t i = 0; i < n; ++i) {
         vector<Event> event_group = events[i];
         int m = event_group.size();
@@ -30,6 +31,7 @@ bool translation_cop_core(vector<vector<Event>>& events, vector<vector<Matrix3d>
         }
         Eigen::JacobiSVD<MatrixXd> svdA(AA, ComputeFullV);
         Vector3d d = svdA.matrixV().col(2).normalized();
+
         // translation v and line moment mmt
         for (size_t j = 0; j < m; ++j) {
             double t = event_group[j].t;
@@ -64,14 +66,20 @@ bool translation_cop_core(vector<vector<Event>>& events, vector<vector<Matrix3d>
         Vector3d u_l = R_l.transpose() * v;
         Vector3d tmp = u_l(1) * e3_l - u_l(2) * e2_l;
         CC.row(i) = tmp.transpose();
+
+        line_struct_all[i] = R_l;
     }
     Eigen::JacobiSVD<MatrixXd> svdC(CC, ComputeFullV);
     v_sol = svdC.matrixV().col(2).normalized();
 
-    return true;
-};
+    bool is_success = true;
+    if (std::isnan(v_sol(0)) || std::isnan(v_sol(1)) || std::isnan(v_sol(2))) {
+        is_success = false;
+    }
+    return is_success;
+}
 
-bool compute_translation_cop(vector<vector<Event>>& events, Vector3d& omg_sol, Vector3d& v_sol) {
+bool compute_translation_cop(vector<vector<Event>>& events, Vector3d& omg_sol, Vector3d& v_sol, vector<Matrix3d>& line_struct_all) {
     int n = events.size();
     if (n < 2) {
         std::cout << "error: at least two lines are needed!" << std::endl;
@@ -111,9 +119,21 @@ bool compute_translation_cop(vector<vector<Event>>& events, Vector3d& omg_sol, V
         orientations[i] = R_vec;
     }
 
-    bool is_success = translation_cop_core(events, orientations, v_sol);
+    bool is_success = translation_cop_core(events, orientations, v_sol, line_struct_all);
 
     return is_success;
+}
+
+bool translation_cop_core(vector<vector<Event>>& events, vector<vector<Matrix3d>>& orientations, Vector3d& v_sol)
+{
+    vector<Matrix3d> line_struct_all;
+    return translation_cop_core(events, orientations, v_sol, line_struct_all);
+}
+
+bool compute_translation_cop(vector<vector<Event>>& events, Vector3d& omg_sol, Vector3d& v_sol)
+{
+    vector<Matrix3d> line_struct_all;
+    return compute_translation_cop(events, omg_sol, v_sol, line_struct_all);
 }
 
 #endif // OPTIMIZER_TRANSLATION_H

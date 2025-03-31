@@ -1,4 +1,4 @@
-function e = evaluate_error(a, b)
+function e = evaluate_ang_error(a, b)
 
 a = a(:);
 b = b(:);

@@ -27,8 +27,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
             "Output arguments\n"
             "1st (optional): estimated angular velocity\n"
             "2nd (optional): estimated linear velocity with scale ambiguity\n"
-            "3rd (optional): objective\n"
-            "4th (optional): runtime (unit: microsecond)\n"
+            "3rd (optional): line structure (each cell correspnds to a line structure)\n"
+            "4th (optional): objective\n"
+            "5th (optional): runtime (unit: microsecond)\n"
             "\n"
             "Supported method types include:\n"
             "101: incidence + exact\n"
@@ -217,10 +218,11 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
 
     // estimate translation and output
     long long elapsedTime2 = 0;
+    vector<Matrix3d> line_struct_all;
     if (nlhs > 1) {
         startTime = std::chrono::high_resolution_clock::now();
         Vector3d v = Vector3d::Zero();
-        bool flag = compute_translation_cop(cpp_events, x, v);
+        bool flag = compute_translation_cop(cpp_events, x, v, line_struct_all);
         plhs[1] = mxCreateDoubleMatrix(3, 1, mxREAL);
         double* result2 = mxGetPr(plhs[1]);
         for (int i = 0; i < 3; ++i) {
@@ -229,17 +231,30 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[]) {
         elapsedTime2 = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - startTime).count();
     }
 
-    // Output the objective
+    // output line structure
     if (nlhs > 2) {
-        plhs[2] = mxCreateDoubleScalar(fval);
+        size_t n = line_struct_all.size();
+        plhs[2] = mxCreateCellMatrix(n, 1);
+        for (size_t j = 0; j < n; ++j) {
+            mxArray *mat = mxCreateDoubleMatrix(3, 3, mxREAL);
+            double *data = mxGetPr(mat);
+            const Eigen::Matrix3d& matrix = line_struct_all[j];
+            std::memcpy(data, matrix.data(), 9 * sizeof(double));
+            mxSetCell(plhs[2], j, mat);
+        }
     }
 
-    // Output the runtime
+    // output objective
     if (nlhs > 3) {
+        plhs[3] = mxCreateDoubleScalar(fval);
+    }
+
+    // output runtime
+    if (nlhs > 4) {
         // unit: microsecond
-        plhs[3] = mxCreateDoubleMatrix(2, 1, mxREAL);
+        plhs[4] = mxCreateDoubleMatrix(2, 1, mxREAL);
         double output3[2] = {static_cast<double>(elapsedTime1), static_cast<double>(elapsedTime2)};
-        memcpy(mxGetData(plhs[3]), output3, 2 * sizeof(double));
+        memcpy(mxGetData(plhs[4]), output3, 2 * sizeof(double));
     }
     return;
 }
